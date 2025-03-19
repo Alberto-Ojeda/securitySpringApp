@@ -7,6 +7,7 @@ import com.microservice.securityapp.models.UserEntity;
 import com.microservice.securityapp.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,8 +15,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("v1")
+//@RequestMapping("v1")
 public class PrincipalController {
+  @Autowired
+  private PasswordEncoder passwordEncoder;
   @Autowired
   private UserRepository userRepository;
   @GetMapping("/hello")
@@ -31,7 +34,7 @@ public class PrincipalController {
     Set<RoleEntity> roles = createUserDTO.getRoles().stream().
       map(role-> RoleEntity.builder().name(Erole.valueOf(role)).build()).collect(Collectors.toSet());
     UserEntity userEntity = UserEntity.builder().username(createUserDTO.getUsername())
-      .password(createUserDTO.getPassword()).email(createUserDTO.getEmail()).roles(roles).build();
+      .password(passwordEncoder.encode(createUserDTO.getPassword())).email(createUserDTO.getEmail()).roles(roles).build();
   userRepository.save(userEntity);
 
 return ResponseEntity.ok(userEntity);

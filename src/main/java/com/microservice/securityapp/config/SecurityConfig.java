@@ -1,5 +1,9 @@
 package com.microservice.securityapp.config;
 
+import com.microservice.securityapp.security.filters.JwtAuthenticationFilter;
+import com.microservice.securityapp.security.jwt.JwtUtils;
+import com.microservice.securityapp.service.impl.UserDetailsServiceImpl;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -17,16 +21,23 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 public class SecurityConfig {
+    @Autowired
+    JwtUtils jwtUtils;
+    @Autowired
+    UserDetailsServiceImpl userDetailsServiceImpl;
  @Bean
-  SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
+  SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity,AuthenticationManager authenticationManager) throws Exception {
+    JwtAuthenticationFilter jwtAuthenticationFilter = new JwtAuthenticationFilter(jwtUtils);
+    jwtAuthenticationFilter.setAuthenticationManager(authenticationManager);
+    jwtAuthenticationFilter.setFilterProcessesUrl("/login");
    return httpSecurity.csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests(
            auth ->
            {auth.requestMatchers("/hello").permitAll();
                    auth.anyRequest().authenticated(); })
            .sessionManagement(session -> {
              session.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-           }).httpBasic().and()
-           .build();
+           }).addFilter(jwtAuthenticationFilter).build();
+
  }
   /* @Bean
   public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
@@ -53,7 +64,7 @@ public class SecurityConfig {
   }
 
 */
-
+/*
   @Bean
    UserDetailsService userDetailsService() {
     InMemoryUserDetailsManager manager = new InMemoryUserDetailsManager();
@@ -63,6 +74,8 @@ public class SecurityConfig {
             build());
     return manager;
   }
+
+ */
     @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -71,7 +84,10 @@ public class SecurityConfig {
   @Bean
    AuthenticationManager authenticationManager(HttpSecurity httpSecurity, PasswordEncoder passwordEncoder) throws Exception {
 
-      return httpSecurity.getSharedObject(AuthenticationManagerBuilder.class).userDetailsService(userDetailsService()).passwordEncoder(passwordEncoder).and().build();
+      return httpSecurity.getSharedObject
+                      (AuthenticationManagerBuilder.class).
+              userDetailsService(userDetailsServiceImpl).
+              passwordEncoder(passwordEncoder).and().build();
 
   }
 

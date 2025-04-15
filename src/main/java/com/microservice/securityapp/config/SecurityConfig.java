@@ -30,14 +30,23 @@ public class SecurityConfig {
     JwtAuthenticationFilter jwtAuthenticationFilter = new JwtAuthenticationFilter(jwtUtils);
     jwtAuthenticationFilter.setAuthenticationManager(authenticationManager);
     jwtAuthenticationFilter.setFilterProcessesUrl("/login");
+return httpSecurity.csrf(AbstractHttpConfigurer::disable)
+        .authorizeHttpRequests(auth ->{
+            auth.requestMatchers("/hello").permitAll();
+            auth.anyRequest().authenticated();
+        }).sessionManagement(session -> {
+            session.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+        })
+        .addFilter(jwtAuthenticationFilter).build();
+    /*
    return httpSecurity.csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests(
            auth ->
-           {auth.requestMatchers("/hello").permitAll();
+           {auth.requestMatchers("/createUser").permitAll();
                    auth.anyRequest().authenticated(); })
            .sessionManagement(session -> {
              session.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
            }).addFilter(jwtAuthenticationFilter).build();
-
+*/
  }
   /* @Bean
   public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
@@ -64,18 +73,7 @@ public class SecurityConfig {
   }
 
 */
-/*
-  @Bean
-   UserDetailsService userDetailsService() {
-    InMemoryUserDetailsManager manager = new InMemoryUserDetailsManager();
-    manager.createUser(
-            User.withUsername("alberto").
-            password("1234").roles().
-            build());
-    return manager;
-  }
 
- */
     @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
